@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/aman")
+//@RequestMapping("/aman")
 @RequiredArgsConstructor
 @Validated
 public class NotificationController {
@@ -72,7 +72,7 @@ public class NotificationController {
 
         return ResponseEntity.ok().build();
     }
-    @PostMapping("/test")
+    @RequestMapping("/aman")
     public String test() {
 
         NotificationEvent event =
