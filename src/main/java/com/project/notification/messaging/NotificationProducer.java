@@ -11,13 +11,14 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationProducer {
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final KafkaTemplate<String, NotificationEvent> kafkaTemplate;
     public void send(NotificationEvent event){
         kafkaTemplate.send(
                 "notification-topic",
                 event.getUserId().toString(),
-                event.toString()
-        );
+                event
+            );
+
         log.info("notification send"+event);
     }
 }

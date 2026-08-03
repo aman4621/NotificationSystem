@@ -1,5 +1,6 @@
 package com.project.notification.messaging;
 
+import com.project.notification.event.NotificationEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
@@ -8,8 +9,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class NotificationConsumer {
     @KafkaListener(topics = "notification-topic", groupId = "notification-group")
-    public void consume(String message) {
-        System.out.println("Consumed message: " + message);
-        log.info("Consumed message: " + message);
+    public void consume(NotificationEvent event) {
+        System.out.println("Consumed message: " + event);
+        log.info("Consumed message: " + event);
     }
 }
