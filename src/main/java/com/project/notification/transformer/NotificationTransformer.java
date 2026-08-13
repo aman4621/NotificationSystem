@@ -2,6 +2,7 @@ package com.project.notification.transformer;
 
 
 import com.project.notification.entity.Notification;
+import com.project.notification.event.NotificationEvent;
 import com.project.notification.response.NotificationResponse;
 import com.project.notification.response.ResponseForUser;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,15 @@ public class NotificationTransformer {
                 .isRead(notification.getIsRead())
                 .build();
     }
+//    public NotificationResponse toNotificationResponse(NotificationEvent event) {
+//        return NotificationResponse.builder()
+//                .userId(event.getUserId())
+//                .title(event.getTitle())
+//                .message(event.getMessage())
+//                .type(event.getType())
+//                .isRead(event.isRead())
+//                .build();
+//    }
 
     public List<ResponseForUser> toResponseForUser(List<Notification> notifications) {
         return notifications.stream()

@@ -19,4 +19,5 @@ public class NotificationEvent {
     private String message;
 
     private NotificationType type;
+    private boolean isRead;
 }

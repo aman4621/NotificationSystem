@@ -2,6 +2,7 @@ package com.project.notification.service;
 
 
 import com.project.notification.entity.Notification;
+import com.project.notification.event.NotificationEvent;
 import com.project.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ public class NotificationService {
         Notification notification1=repository.save(notification);
         return notification1;
     }
+
 
     public List<Notification> getNotificationByUserId(long userId) {
         return repository.findByUserIdOrderByCreatedAtDesc(userId);

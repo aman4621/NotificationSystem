@@ -4,6 +4,7 @@ import com.aman.projectframework.api.APIResponse;
 import com.project.notification.entity.NotificationType;
 import com.project.notification.event.NotificationEvent;
 import com.project.notification.facade.NotificationFacade;
+import com.project.notification.messaging.NotificationConsumer;
 import com.project.notification.messaging.NotificationProducer;
 import com.project.notification.request.NotificationRequest;
 import com.project.notification.response.NotificationResponse;
@@ -22,12 +23,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-//@RequestMapping("/aman")
+@RequestMapping("/aman")
 @RequiredArgsConstructor
 @Validated
 public class NotificationController {
     private final NotificationFacade facade;
     private final NotificationProducer producer;
+    private final NotificationConsumer consumer;
     @PostMapping("/notification")
     public ResponseEntity<APIResponse<NotificationResponse>> createNotification(@Valid @RequestBody NotificationRequest request){
         NotificationResponse result=facade.makeNotification(request);
@@ -39,6 +41,16 @@ public class NotificationController {
                 .data(result)
                 .build();
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+    @PostMapping("/notifyToKafka")
+    public ResponseEntity<APIResponse<String>> notifyToKafka(@Valid @RequestBody NotificationRequest request){
+        facade.publishNotification(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                APIResponse.<String>builder()
+                        .status("Success")
+                        .message("Notification received and queued for processing")
+                        .build()
+        );
     }
     @GetMapping("/users/{userId}")
     public ResponseEntity<APIResponse<List<ResponseForUser>>> getNotificationForUser(@PathVariable  @Positive @Min(1) long userId){
@@ -72,7 +84,7 @@ public class NotificationController {
 
         return ResponseEntity.ok().build();
     }
-    @RequestMapping("/aman")
+    @PostMapping("/aman")
     public String test() {
 
         NotificationEvent event =

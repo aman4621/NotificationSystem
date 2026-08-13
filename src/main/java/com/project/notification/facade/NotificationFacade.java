@@ -2,22 +2,29 @@ package com.project.notification.facade;
 
 import com.aman.projectframework.exception.ServiceException;
 import com.project.notification.entity.Notification;
+import com.project.notification.event.NotificationEvent;
+
+import com.project.notification.messaging.NotificationProducer;
 import com.project.notification.request.NotificationRequest;
 import com.project.notification.response.NotificationResponse;
 import com.project.notification.response.ResponseForUser;
 import com.project.notification.response.ResponseFromId;
 import com.project.notification.service.NotificationService;
 import com.project.notification.transformer.NotificationTransformer;
+
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class NotificationFacade {
     private final NotificationTransformer transformer;
     private final NotificationService service;
+    private final NotificationProducer producer;
 
     public NotificationResponse makeNotification(NotificationRequest request) {
         try {
@@ -31,6 +38,7 @@ public class NotificationFacade {
                             .build();
 
             Notification savedNotification = service.makeNotification(notification);
+
             NotificationResponse response = null;
             if (savedNotification != null) {
                 response = transformer.toNotificationResponse(notification);
@@ -111,5 +119,17 @@ public class NotificationFacade {
                     HttpStatus.SERVICE_UNAVAILABLE
             );
         }
+    }
+
+    public void publishNotification(NotificationRequest request) {
+        NotificationEvent event=NotificationEvent.builder()
+                .userId(request.getUserId())
+                .title(request.getTitle())
+                .message(request.getMessage())
+                .type(request.getType())
+                .isRead(false)
+                .build();
+        producer.send(event);
+        log.info("publishNotification event published"+event);
     }
 }
