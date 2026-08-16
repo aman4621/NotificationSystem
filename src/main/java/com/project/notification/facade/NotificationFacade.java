@@ -10,8 +10,10 @@ import com.project.notification.response.NotificationResponse;
 import com.project.notification.response.ResponseForUser;
 import com.project.notification.response.ResponseFromId;
 import com.project.notification.service.NotificationService;
+import com.project.notification.service.OutBoxEventServiceImpl;
 import com.project.notification.transformer.NotificationTransformer;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -25,6 +27,7 @@ public class NotificationFacade {
     private final NotificationTransformer transformer;
     private final NotificationService service;
     private final NotificationProducer producer;
+    private final OutBoxEventServiceImpl outBoxEventService;
 
     public NotificationResponse makeNotification(NotificationRequest request) {
         try {
@@ -120,7 +123,7 @@ public class NotificationFacade {
             );
         }
     }
-
+    @Transactional
     public void publishNotification(NotificationRequest request) {
         NotificationEvent event=NotificationEvent.builder()
                 .userId(request.getUserId())
@@ -129,7 +132,7 @@ public class NotificationFacade {
                 .type(request.getType())
                 .isRead(false)
                 .build();
-        producer.send(event);
+        outBoxEventService.saveNotificationEvent(event);
         log.info("publishNotification event published"+event);
     }
 }

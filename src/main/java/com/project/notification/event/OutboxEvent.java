@@ -25,7 +25,6 @@ public class OutboxEvent {
     @Column(nullable = false)
     private String aggregateId;
 
-    @Lob
     @Column(nullable = false, columnDefinition = "TEXT")
     private String payload;
 
