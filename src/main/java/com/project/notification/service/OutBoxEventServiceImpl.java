@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +31,10 @@ public class OutBoxEventServiceImpl {
     public void saveNotificationEvent(NotificationEvent event) {
 
         try {
+            // Generate unique ID for this event (if not already set)
+            if (event.getEventId() == null) {
+                event.setEventId(UUID.randomUUID().toString());
+            }
 
             String payload = objectMapper.writeValueAsString(event);
 
