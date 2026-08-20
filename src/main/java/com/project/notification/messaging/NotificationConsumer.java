@@ -1,11 +1,15 @@
 package com.project.notification.messaging;
 
 import com.aman.projectframework.exception.ServiceException;
+import com.project.notification.client.IAMClient;
 import com.project.notification.entity.FailedNotification;
 import com.project.notification.entity.Notification;
 import com.project.notification.event.InboxEvent;
 import com.project.notification.event.NotificationEvent;
+import com.project.notification.notificationImplementation.NotificationSender;
+import com.project.notification.notificationImplementation.NotificationSenderFactory;
 import com.project.notification.repository.FailedNotificationRepository;
+import com.project.notification.response.NotificationProfileResponse;
 import com.project.notification.service.InboxEventService;
 import com.project.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +35,8 @@ public class NotificationConsumer {
     private final NotificationService notificationService;
     private final FailedNotificationRepository failedNotificationRepository;
     private final InboxEventService inboxEventService;
+    private final IAMClient  iamClient;
+    private final NotificationSenderFactory senderFactory;
     @RetryableTopic(
             attempts = "4",
             backoff=@Backoff(delay = 5000, multiplier = 6,maxDelay = 120000),
@@ -107,6 +113,15 @@ public class NotificationConsumer {
                     .build();
             notificationService.makeNotification(notification);
             log.info("notification saved successfully");
+
+            NotificationProfileResponse response=iamClient.getNotificationProfile(event.getUserId()).getData();
+            log.info(
+                    "Notification saved successfully. eventId={}, userId={}",
+                    event.getEventId(),
+                    event.getUserId()
+            );
+            NotificationSender sender=senderFactory.getSender(event.getType());
+            sender.send(event,response);
 
             // ====== STEP 5: MARK AS PROCESSED ======
             // WHY: Signal "don't process again", confirm to Kafka offset is safe to commit
