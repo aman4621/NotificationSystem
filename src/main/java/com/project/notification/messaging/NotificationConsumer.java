@@ -11,6 +11,7 @@ import com.project.notification.notificationImplementation.NotificationSenderFac
 import com.project.notification.repository.FailedNotificationRepository;
 import com.project.notification.response.NotificationProfileResponse;
 import com.project.notification.service.InboxEventService;
+import com.project.notification.service.NotificationProfileCacheService;
 import com.project.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ public class NotificationConsumer {
     private final InboxEventService inboxEventService;
     private final IAMClient  iamClient;
     private final NotificationSenderFactory senderFactory;
+    private final NotificationProfileCacheService cacheService;
     @RetryableTopic(
             attempts = "4",
             backoff=@Backoff(delay = 5000, multiplier = 6,maxDelay = 120000),
@@ -114,14 +116,28 @@ public class NotificationConsumer {
             notificationService.makeNotification(notification);
             log.info("notification saved successfully");
 
-            NotificationProfileResponse response=iamClient.getNotificationProfile(event.getUserId()).getData();
-            log.info(
-                    "Notification saved successfully. eventId={}, userId={}",
-                    event.getEventId(),
-                    event.getUserId()
-            );
-            NotificationSender sender=senderFactory.getSender(event.getType());
-            sender.send(event,response);
+            //calling redis to check if profile is in redis db or not
+
+            NotificationProfileResponse cachedProfile=cacheService.get(event.getUserId());
+            if (cachedProfile != null) {
+
+                log.info(
+                        "Notification profile found in Redis for userId={}"
+                        );
+                NotificationSender sender=senderFactory.getSender(event.getType());
+                sender.send(event,cachedProfile);
+            }
+            else {
+                NotificationProfileResponse response = iamClient.getNotificationProfile(event.getUserId()).getData();
+                log.info(
+                        "Notification saved successfully. eventId={}, userId={}",
+                        event.getEventId(),
+                        event.getUserId()
+                );
+                cacheService.save(response);
+                NotificationSender sender = senderFactory.getSender(event.getType());
+                sender.send(event, response);
+            }
 
             // ====== STEP 5: MARK AS PROCESSED ======
             // WHY: Signal "don't process again", confirm to Kafka offset is safe to commit
